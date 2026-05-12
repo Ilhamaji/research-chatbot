@@ -21,6 +21,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "The Research System",
   description: "AI-powered academic research and summary tool.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
