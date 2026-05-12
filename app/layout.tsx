@@ -32,6 +32,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geist.variable} ${hanken.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-on-background font-inter font-[family-name:var(--font-inter)]">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
