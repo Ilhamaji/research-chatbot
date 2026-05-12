@@ -190,3 +190,16 @@ body {
   height: 100%;
 }
 
+/* Memastikan kursor berubah menjadi pointer saat menghover tombol */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"]:disabled {
+  cursor: not-allowed;
+}

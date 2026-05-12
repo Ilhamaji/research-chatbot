@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookMarked, ArrowRight, Trash2, BookOpen } from "lucide-react";
+import { ConfirmationModal } from "@/components/ConfirmationModal";
 
 type SavedArticle = {
   id: string;
@@ -18,6 +19,7 @@ type SavedArticle = {
 
 export default function LibraryPage() {
   const [articles, setArticles] = useState<SavedArticle[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("saved_articles");
@@ -95,7 +97,7 @@ export default function LibraryPage() {
                   
                   <div className="flex items-center justify-between pt-4 border-t border-outline-variant/20 mt-auto">
                     <button
-                      onClick={() => removeArticle(article.id)}
+                      onClick={() => setDeleteTarget(article.id)}
                       className="p-2 text-outline hover:text-error hover:bg-error/10 rounded-lg transition-colors"
                       title="Remove from Library"
                     >
@@ -118,6 +120,20 @@ export default function LibraryPage() {
             </AnimatePresence>
           </div>
         )}
+        <ConfirmationModal
+          isOpen={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            if (deleteTarget) {
+              removeArticle(deleteTarget);
+              setDeleteTarget(null);
+            }
+          }}
+          title="Konfirmasi Hapus Artikel"
+          message="Apakah Anda yakin ingin menghapus artikel ini dari perpustakaan Anda?"
+          confirmLabel="Hapus"
+          variant="danger"
+        />
       </div>
     </div>
   );

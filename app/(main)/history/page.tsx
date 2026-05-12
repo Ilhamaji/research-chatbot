@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Search, Trash2, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ConfirmationModal } from "@/components/ConfirmationModal";
 
 type HistoryItem = {
   id: string;
@@ -15,6 +16,11 @@ type HistoryItem = {
 export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const router = useRouter();
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "clear_all" | "remove_item";
+    targetId?: string;
+  }>({ isOpen: false, type: "clear_all" });
 
   useEffect(() => {
     const saved = localStorage.getItem("search_history");
@@ -32,8 +38,8 @@ export default function HistoryPage() {
     setHistory([]);
   };
 
-  const removeHistoryItem = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const removeHistoryItem = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const newHistory = history.filter((h) => h.id !== id);
     setHistory(newHistory);
     localStorage.setItem("search_history", JSON.stringify(newHistory));
@@ -60,7 +66,7 @@ export default function HistoryPage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={clearHistory}
+              onClick={() => setModalConfig({ isOpen: true, type: "clear_all" })}
               className="px-4 py-2 bg-surface-container text-error hover:bg-error/10 rounded-lg transition-colors flex items-center gap-2 font-medium typography-label-md shrink-0"
             >
               <Trash2 className="w-4 h-4" />
@@ -109,7 +115,10 @@ export default function HistoryPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={(e) => removeHistoryItem(item.id, e)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setModalConfig({ isOpen: true, type: "remove_item", targetId: item.id });
+                      }}
                       className="p-2 text-outline hover:text-error hover:bg-error/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                       aria-label="Remove item"
                     >
@@ -124,6 +133,30 @@ export default function HistoryPage() {
             </AnimatePresence>
           </div>
         )}
+        <ConfirmationModal
+          isOpen={modalConfig.isOpen}
+          onClose={() => setModalConfig((prev) => ({ ...prev, isOpen: false }))}
+          onConfirm={() => {
+            if (modalConfig.type === "clear_all") {
+              clearHistory();
+            } else if (modalConfig.type === "remove_item" && modalConfig.targetId) {
+              removeHistoryItem(modalConfig.targetId);
+            }
+            setModalConfig((prev) => ({ ...prev, isOpen: false }));
+          }}
+          title={
+            modalConfig.type === "clear_all"
+              ? "Konfirmasi Hapus Semua Riwayat"
+              : "Konfirmasi Hapus Riwayat"
+          }
+          message={
+            modalConfig.type === "clear_all"
+              ? "Apakah Anda yakin ingin menghapus seluruh riwayat pencarian Anda? Tindakan ini tidak dapat dibatalkan."
+              : "Apakah Anda yakin ingin menghapus item riwayat pencarian ini?"
+          }
+          confirmLabel="Hapus"
+          variant="danger"
+        />
       </div>
     </div>
   );

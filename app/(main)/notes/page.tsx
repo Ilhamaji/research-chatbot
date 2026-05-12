@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, Save, Clock, ChevronRight, ChevronLeft, FileText } from "lucide-react";
 import { getNotes, addNote, editNote, deleteNote } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { ConfirmationModal } from "@/components/ConfirmationModal";
 
 type Note = {
   id: number;
@@ -24,6 +25,11 @@ export default function NotesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "delete" | "edit" | "save";
+    targetId?: number;
+  }>({ isOpen: false, type: "delete" });
 
   const fetchNotes = async () => {
     try {
@@ -212,7 +218,7 @@ export default function NotesPage() {
               <div className="flex items-center gap-2">
                 {isEditing ? (
                   <button 
-                    onClick={handleSave}
+                    onClick={() => setModalConfig({ isOpen: true, type: "save" })}
                     disabled={isSaving}
                     className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-container transition-colors text-sm font-medium shadow-sm shadow-primary/20 disabled:opacity-70"
                   >
@@ -221,14 +227,14 @@ export default function NotesPage() {
                   </button>
                 ) : (
                   <button 
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => setModalConfig({ isOpen: true, type: "edit" })}
                     className="flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface hover:bg-outline-variant/30 rounded-lg transition-colors text-sm font-medium"
                   >
                     <Edit3 className="w-4 h-4 hidden sm:block" /> Edit
                   </button>
                 )}
                 <button 
-                  onClick={() => handleDelete(activeNote.id)}
+                  onClick={() => setModalConfig({ isOpen: true, type: "delete", targetId: activeNote.id })}
                   disabled={isDeleting}
                   className="p-2 text-error hover:bg-error-container/50 rounded-lg transition-colors disabled:opacity-50"
                 >
@@ -273,6 +279,46 @@ export default function NotesPage() {
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={() => {
+          if (modalConfig.type === "delete" && modalConfig.targetId !== undefined) {
+            handleDelete(modalConfig.targetId);
+            setModalConfig(prev => ({ ...prev, isOpen: false }));
+          } else if (modalConfig.type === "edit") {
+            setIsEditing(true);
+            setModalConfig(prev => ({ ...prev, isOpen: false }));
+          } else if (modalConfig.type === "save") {
+            handleSave();
+            setModalConfig(prev => ({ ...prev, isOpen: false }));
+          }
+        }}
+        title={
+          modalConfig.type === "delete"
+            ? "Konfirmasi Hapus"
+            : modalConfig.type === "edit"
+            ? "Konfirmasi Edit"
+            : "Konfirmasi Simpan"
+        }
+        message={
+          modalConfig.type === "delete"
+            ? "Apakah Anda yakin ingin menghapus catatan ini? Tindakan ini tidak dapat dibatalkan."
+            : modalConfig.type === "edit"
+            ? "Apakah Anda yakin ingin mengedit catatan ini?"
+            : "Apakah Anda yakin ingin menyimpan perubahan pada catatan ini?"
+        }
+        confirmLabel={
+          modalConfig.type === "delete"
+            ? "Hapus"
+            : modalConfig.type === "edit"
+            ? "Edit"
+            : "Simpan"
+        }
+        variant={modalConfig.type === "delete" ? "danger" : "info"}
+        isLoading={isDeleting || isSaving}
+      />
     </div>
   );
 }
